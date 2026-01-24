@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const commissionSchema = new mongoose.Schema({
     agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -17,4 +17,4 @@ const commissionSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-module.exports = mongoose.model('Commission', commissionSchema);
+export default mongoose.model('Commission', commissionSchema);
