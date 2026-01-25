@@ -19,6 +19,15 @@ export const getMyOrders = async (req, res) => {
     }
 };
 
+export const getAgentOrders = async (req, res) => {
+    try {
+        const orders = await orderService.getAgentOrders(req.user.id);
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const getAllOrders = async (req, res) => {
     try {
         const orders = await orderService.getAllOrders(req.query);

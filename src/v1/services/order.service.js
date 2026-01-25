@@ -3,6 +3,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import { ObjectId } from 'mongodb';
+import * as notificationService from './notification.service.js';
 
 export const createOrder = async (userId, orderData) => {
     const { items, referralCode, shippingAddress, paymentMethod } = orderData;
@@ -13,22 +14,22 @@ export const createOrder = async (userId, orderData) => {
 
     for (const item of items) {
         let product;
-        
+
         // Try by ObjectId only if it's a valid MongoDB ObjectId format
         if (ObjectId.isValid(item.productId) && typeof item.productId === 'string' && item.productId.length === 24) {
             product = await Product.findById(item.productId);
         }
-        
+
         // If not found by ObjectId, try to find by slug
         if (!product) {
             product = await Product.findOne({ slug: item.productId });
         }
-        
+
         // If still not found, try numeric ID matching slug pattern
         if (!product && !isNaN(item.productId)) {
             product = await Product.findOne({ slug: `product-${item.productId}` });
         }
-        
+
         if (!product) {
             throw new Error(`Product ${item.productId} not found`);
         }
@@ -80,11 +81,37 @@ export const createOrder = async (userId, orderData) => {
         timeline: [{ status: 'PENDING', note: `Order created - Payment Method: ${paymentMethod || 'card'}` }]
     });
 
+    // Notify Customer
+    await notificationService.createNotification({
+        userId: userId,
+        role: 'CUSTOMER',
+        title: 'Order Created',
+        message: `Your order ${order.orderNumber} has been successfully placed.`,
+        type: 'ORDER'
+    });
+
+    // Notify Agent
+    if (agentId) {
+        await notificationService.createNotification({
+            userId: agentId,
+            role: 'AGENT',
+            title: 'New Order Assigned',
+            message: `New order ${order.orderNumber} has been placed with your referral code.`,
+            type: 'ORDER'
+        });
+    }
+
     return order;
 };
 
 export const getMyOrders = async (userId) => {
     return await Order.find({ customerId: userId }).sort({ createdAt: -1 });
+};
+
+export const getAgentOrders = async (agentId) => {
+    return await Order.find({ agentId: agentId })
+        .populate('customerId', 'firstName lastName email')
+        .sort({ createdAt: -1 });
 };
 
 export const getAllOrders = async (filters = {}) => {
@@ -97,6 +124,26 @@ export const updateOrderStatus = async (orderId, status) => {
 
     order.status = status;
     order.timeline.push({ status, note: `Status updated to ${status}` });
+
+    // Notify Customer
+    await notificationService.createNotification({
+        userId: order.customerId,
+        role: 'CUSTOMER',
+        title: `Order ${status}`,
+        message: `Your order ${order.orderNumber} status has been updated to ${status}.`,
+        type: 'ORDER'
+    });
+
+    // Notify Agent if Cancelled
+    if (status === 'CANCELLED' && order.agentId) {
+        await notificationService.createNotification({
+            userId: order.agentId,
+            role: 'AGENT',
+            title: 'Order Cancelled',
+            message: `Order ${order.orderNumber} assigned to you has been cancelled.`,
+            type: 'ORDER'
+        });
+    }
 
     // If status is COMPLETED or DELIVERED, trigger commission calculation
     if (status === 'COMPLETED' || status === 'DELIVERED') {

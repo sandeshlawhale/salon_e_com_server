@@ -2,6 +2,7 @@
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import * as notificationService from './notification.service.js';
 
 const generateToken = (id, role) => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET, {
@@ -57,6 +58,20 @@ export const registerUser = async (userData) => {
     }
 
     const user = await User.create(newUserObj);
+
+    // Notify Admin if new Agent registered
+    if (user && user.role === 'AGENT') {
+        const admin = await User.findOne({ role: 'ADMIN' });
+        if (admin) {
+            await notificationService.createNotification({
+                userId: admin._id,
+                role: 'ADMIN',
+                title: 'New Agent Registered',
+                message: `${user.firstName} ${user.lastName} has registered as an agent.`,
+                type: 'SYSTEM'
+            });
+        }
+    }
 
     if (user) {
         return {

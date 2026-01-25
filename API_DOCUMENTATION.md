@@ -88,30 +88,36 @@ Base URL: `http://localhost:5000/api/v1`
 ### 1. List Products
 **Endpoint:** `GET /products`
 **Query Params (Optional):**
-*   `category=Hair`
+*   `category=Hair`    // make sure to compare all lowercase letters
 *   `status=ACTIVE`
 
 ### 2. Create Product (Admin Only)
 **Endpoint:** `POST /products`
 **Headers:** `Authorization: Bearer <admin_token>`
 
-**Body (JSON):**
-```json
-{
-  "name": "Luxury Shampoo",
-  "slug": "luxury-shampoo",
-  "description": "Best shampoo ever",
-  "price": 25.00,
-  "category": "Hair Care",
-  "status": "ACTIVE",
-  "inventoryCount": 100
-}
-```
+**Body (Multipart Form Data):**
+*   `name`: "Luxury Shampoo"
+*   `slug`: "luxury-shampoo"
+*   `description`: "Best shampoo ever"
+*   `price`: 25.00
+*   `category`: "Hair Care"
+*   `status`: "ACTIVE"
+*   `inventoryCount`: 100
+*   `images`: (File Upload) - Max 5 images (jpg, png, jpeg).
+
 
 ### 3. Update Product (Admin Only)
 **Endpoint:** `PATCH /products/:id`
 **Headers:** `Authorization: Bearer <admin_token>`
-**Body:** JSON object with fields to update.
+**Body:** Multipart Form Data (if updating images) or JSON.
+*   `images`: (File Upload) - Optional. If provided, adds to existing images or replaces based on logic. Max 5 images.
+
+### 4. Get Single Product
+**Endpoint:** `GET /products/:id`
+
+### 5. Delete Product (Admin Only)
+**Endpoint:** `DELETE /products/:id`
+**Headers:** `Authorization: Bearer <admin_token>`
 
 ---
 
@@ -161,6 +167,10 @@ Base URL: `http://localhost:5000/api/v1`
 ```
 *Note: Setting status to `COMPLETED` or `DELIVERED` triggers commission calculation if an agent was involved.*
 
+### 5. Get Agent Orders (Agent Only)
+**Endpoint:** `GET /orders/agent`
+**Headers:** `Authorization: Bearer <agent_token>`
+
 ---
 
 ## Commissions
@@ -172,3 +182,42 @@ Base URL: `http://localhost:5000/api/v1`
 ### 2. Get All Commissions (Admin Only)
 **Endpoint:** `GET /commissions`
 **Headers:** `Authorization: Bearer <admin_token>`
+
+---
+
+## Notifications
+
+### 1. Get My Notifications
+**Endpoint:** `GET /notifications`
+**Headers:** `Authorization: Bearer <token>`
+
+### 2. Mark Notification as Read
+**Endpoint:** `PUT /notifications/:id/read`
+**Headers:** `Authorization: Bearer <token>`
+
+### 3. Send Notification (Internal/Admin)
+**Endpoint:** `POST /notifications/send`
+**Headers:** `Authorization: Bearer <token>`
+**Body (JSON):**
+```json
+{
+  "userId": "user_id",
+  "role": "CUSTOMER",
+  "title": "Title",
+  "message": "Message body",
+  "type": "SYSTEM"
+}
+```
+
+---
+
+## User Profile
+
+### 1. Get My Profile
+**Endpoint:** `GET /users/profile`
+**Headers:** `Authorization: Bearer <token>`
+
+### 2. Update My Profile
+**Endpoint:** `PUT /users/profile`
+**Headers:** `Authorization: Bearer <token>`
+**Body:** JSON object with fields to update (e.g., firstName, lastName, phone).
