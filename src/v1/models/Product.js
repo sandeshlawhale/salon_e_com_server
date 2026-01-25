@@ -17,6 +17,18 @@ const productSchema = new mongoose.Schema({
         enum: ['ACTIVE', 'DRAFT', 'ARCHIVED'],
         default: 'DRAFT'
     }
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual for getting the first image as the main image
+productSchema.virtual('image').get(function () {
+    if (this.images && this.images.length > 0) {
+        return this.images[0];
+    }
+    return null;
+});
 
 export default mongoose.model('Product', productSchema);

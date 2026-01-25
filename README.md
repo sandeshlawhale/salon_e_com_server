@@ -27,8 +27,8 @@ Follow these steps to set up and run the backend server locally.
     **Example .env:**
     ```env
     PORT=5000
-    MONGO_URI=mongodb://localhost:27017/salon_db
-    JWT_SECRET=your_super_secret_key
+    MONGO_URI=mongodb://localhost:6969/salon_db
+    JWT_SECRET=your_secret_key
     NODE_ENV=development
     ```
 

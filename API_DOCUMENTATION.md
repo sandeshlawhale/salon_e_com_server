@@ -95,23 +95,22 @@ Base URL: `http://localhost:5000/api/v1`
 **Endpoint:** `POST /products`
 **Headers:** `Authorization: Bearer <admin_token>`
 
-**Body (JSON):**
-```json
-{
-  "name": "Luxury Shampoo",
-  "slug": "luxury-shampoo",
-  "description": "Best shampoo ever",
-  "price": 25.00,
-  "category": "Hair Care",
-  "status": "ACTIVE",
-  "inventoryCount": 100
-}
-```
+**Body (Multipart Form Data):**
+*   `name`: "Luxury Shampoo"
+*   `slug`: "luxury-shampoo"
+*   `description`: "Best shampoo ever"
+*   `price`: 25.00
+*   `category`: "Hair Care"
+*   `status`: "ACTIVE"
+*   `inventoryCount`: 100
+*   `images`: (File Upload) - Max 5 images (jpg, png, jpeg).
+
 
 ### 3. Update Product (Admin Only)
 **Endpoint:** `PATCH /products/:id`
 **Headers:** `Authorization: Bearer <admin_token>`
-**Body:** JSON object with fields to update.
+**Body:** Multipart Form Data (if updating images) or JSON.
+*   `images`: (File Upload) - Optional. If provided, adds to existing images or replaces based on logic. Max 5 images.
 
 ### 4. Get Single Product
 **Endpoint:** `GET /products/:id`
