@@ -42,3 +42,19 @@ export const updateProduct = async (id, updateData) => {
 
     return product;
 };
+
+export const getProductById = async (id) => {
+    const product = await Product.findById(id);
+    if (!product) {
+        throw new Error('Product not found');
+    }
+    return product;
+};
+
+export const deleteProduct = async (id) => {
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) {
+        throw new Error('Product not found');
+    }
+    return { message: 'Product deleted successfully' };
+};

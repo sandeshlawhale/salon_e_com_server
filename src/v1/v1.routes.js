@@ -12,10 +12,14 @@ import authRoutes from './routes/auth.routes.js';
 import productRoutes from './routes/product.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import commissionRoutes from './routes/commission.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/commissions', commissionRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/users', userRoutes);
 
 export default router;

@@ -1,0 +1,13 @@
+import express from 'express';
+import * as notificationController from '../controllers/notification.controller.js';
+import { protect } from '../middleware/auth.middleware.js';
+
+const router = express.Router();
+
+router.use(protect); // All notification routes require login
+
+router.get('/', notificationController.getNotifications);
+router.post('/send', notificationController.sendNotification); // Internal use mostly, but exposed for internal tools
+router.put('/:id/read', notificationController.markRead);
+
+export default router;
