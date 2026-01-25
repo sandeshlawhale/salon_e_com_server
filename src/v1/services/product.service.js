@@ -7,8 +7,6 @@ export const listProducts = async (filters = {}) => {
     if (filters.category) {
         query.category = filters.category;
     }
-    // Only show ACTIVE products to public unless specified otherwise (handled in controller usually, but safe default)
-    // For now, let's assume this returns all for flexibility, or filter by status if passed.
     if (filters.status) {
         query.status = filters.status;
     } else {
@@ -56,5 +54,5 @@ export const deleteProduct = async (id) => {
     if (!product) {
         throw new Error('Product not found');
     }
-    return { message: 'Product deleted successfully' };
+    return { product };
 };
