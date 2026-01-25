@@ -88,7 +88,7 @@ Base URL: `http://localhost:5000/api/v1`
 ### 1. List Products
 **Endpoint:** `GET /products`
 **Query Params (Optional):**
-*   `category=Hair`
+*   `category=Hair`    // make sure to compare all lowercase letters
 *   `status=ACTIVE`
 
 ### 2. Create Product (Admin Only)

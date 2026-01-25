@@ -11,5 +11,10 @@ router.get('/', productController.getProducts);
 // Admin only routes
 router.post('/', protect, authorize('ADMIN'), productController.createProduct);
 router.patch('/:id', protect, authorize('ADMIN'), productController.updateProduct);
+router.delete('/:id', protect, authorize('ADMIN'), productController.deleteProduct);
+
+// Public/User routes (Get single product by ID) matches /:id so must be after specific routes or handled carefully.
+// Since it's dynamic, putting it last is safer if we had other specific sub-routes like /featured
+router.get('/:id', productController.getProductById);
 
 export default router;
