@@ -4,22 +4,11 @@ import * as productService from '../services/product.service.js';
 export const getProducts = async (req, res) => {
     try {
         const filters = req.query;
-        console.log('[getProducts] Request filters:', filters);
 
         const products = await productService.listProducts(filters);
 
-        console.log(`[getProducts] Returning ${products.length} products`);
-        if (products.length > 0) {
-            console.log('[getProducts] Sample product:', {
-                _id: products[0]._id,
-                name: products[0].name,
-                status: products[0].status
-            });
-        }
-
         res.json(products);
     } catch (error) {
-        console.error('[getProducts] Error:', error.message);
         res.status(500).json({ message: error.message });
     }
 };
