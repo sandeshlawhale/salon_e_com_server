@@ -8,6 +8,7 @@ import upload from '../middleware/upload.middleware.js';
 const router = express.Router();
 
 router.get('/', productController.getProducts);
+router.get('/:id', productController.getProductById);
 
 // Admin only routes
 router.post('/', protect, authorize('ADMIN'), upload.array('images', 5), productController.createProduct);
