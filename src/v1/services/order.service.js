@@ -68,6 +68,12 @@ export const getMyOrders = async (userId) => {
     return await Order.find({ customerId: userId }).sort({ createdAt: -1 });
 };
 
+export const getAgentOrders = async (agentId) => {
+    return await Order.find({ agentId: agentId })
+        .populate('customerId', 'firstName lastName email')
+        .sort({ createdAt: -1 });
+};
+
 export const getAllOrders = async (filters = {}) => {
     return await Order.find(filters).populate('customerId', 'firstName lastName email').sort({ createdAt: -1 });
 };
