@@ -7,16 +7,33 @@ export const listProducts = async (filters = {}) => {
     if (filters.category) {
         query.category = filters.category;
     }
-    // Only show ACTIVE products to public unless specified otherwise (handled in controller usually, but safe default)
-    // For now, let's assume this returns all for flexibility, or filter by status if passed.
     if (filters.status) {
         query.status = filters.status;
     } else {
         query.status = 'ACTIVE'; // Default to ACTIVE for public listing
     }
 
+    console.log('[listProducts] Query:', query);
     const products = await Product.find(query);
+    console.log(`[listProducts] Found ${products.length} products`);
     return products;
+};
+
+export const getProductById = async (id) => {
+    // First try to find by MongoDB ObjectId
+    let product = await Product.findById(id);
+    
+    // If not found, try to find by slug (for string IDs that aren't ObjectIds)
+    if (!product) {
+        product = await Product.findOne({ slug: id });
+    }
+    
+    // If still not found, try numeric ID matching slug pattern
+    if (!product && !isNaN(id)) {
+        product = await Product.findOne({ slug: `product-${id}` });
+    }
+    
+    return product;
 };
 
 export const createProduct = async (productData) => {
@@ -35,6 +52,16 @@ export const updateProduct = async (id, updateData) => {
         new: true,
         runValidators: true
     });
+
+    if (!product) {
+        throw new Error('Product not found');
+    }
+
+    return product;
+};
+
+export const deleteProduct = async (id) => {
+    const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
         throw new Error('Product not found');

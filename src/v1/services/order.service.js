@@ -2,16 +2,33 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import { ObjectId } from 'mongodb';
 
 export const createOrder = async (userId, orderData) => {
-    const { items, referralCode, shippingAddress } = orderData;
+    const { items, referralCode, shippingAddress, paymentMethod } = orderData;
 
     // 1. Validate Items & Calculate Prices
     let subtotal = 0;
     const orderItems = [];
 
     for (const item of items) {
-        const product = await Product.findById(item.productId);
+        let product;
+        
+        // Try by ObjectId only if it's a valid MongoDB ObjectId format
+        if (ObjectId.isValid(item.productId) && typeof item.productId === 'string' && item.productId.length === 24) {
+            product = await Product.findById(item.productId);
+        }
+        
+        // If not found by ObjectId, try to find by slug
+        if (!product) {
+            product = await Product.findOne({ slug: item.productId });
+        }
+        
+        // If still not found, try numeric ID matching slug pattern
+        if (!product && !isNaN(item.productId)) {
+            product = await Product.findOne({ slug: `product-${item.productId}` });
+        }
+        
         if (!product) {
             throw new Error(`Product ${item.productId} not found`);
         }
@@ -58,7 +75,9 @@ export const createOrder = async (userId, orderData) => {
         tax,
         shippingCost,
         total,
-        timeline: [{ status: 'PENDING', note: 'Order created' }]
+        paymentMethod: paymentMethod || 'card',
+        paymentStatus: 'UNPAID',
+        timeline: [{ status: 'PENDING', note: `Order created - Payment Method: ${paymentMethod || 'card'}` }]
     });
 
     return order;
