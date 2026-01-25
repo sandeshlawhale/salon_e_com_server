@@ -52,7 +52,7 @@ export const createOrder = async (userId, orderData) => {
     const shippingCost = subtotal > 50 ? 0 : 10; // Free shipping over $50
     const total = subtotal + tax + shippingCost;
 
-    // 3. Find Agent if Referral Code provided
+    // 3. Find Agent
     let agentId = null;
     if (referralCode) {
         const agent = await User.findOne({
@@ -61,6 +61,12 @@ export const createOrder = async (userId, orderData) => {
         });
         if (agent) {
             agentId = agent._id;
+        }
+    } else {
+        // Check if user is linked to an agent
+        const user = await User.findById(userId);
+        if (user && user.customerProfile && user.customerProfile.assignedAgentId) {
+            agentId = user.customerProfile.assignedAgentId;
         }
     }
 
@@ -96,7 +102,7 @@ export const createOrder = async (userId, orderData) => {
             userId: agentId,
             role: 'AGENT',
             title: 'New Order Assigned',
-            message: `New order ${order.orderNumber} has been placed with your referral code.`,
+            message: `New order ${order.orderNumber} has been placed.`,
             type: 'ORDER'
         });
     }
@@ -122,6 +128,7 @@ export const updateOrderStatus = async (orderId, status) => {
     const order = await Order.findById(orderId);
     if (!order) throw new Error('Order not found');
 
+    const previousStatus = order.status;
     order.status = status;
     order.timeline.push({ status, note: `Status updated to ${status}` });
 
@@ -143,16 +150,22 @@ export const updateOrderStatus = async (orderId, status) => {
             message: `Order ${order.orderNumber} assigned to you has been cancelled.`,
             type: 'ORDER'
         });
+
+        // Handle Refund/Reversal Logic
+        const commissionService = await import('./commission.service.js');
+        await commissionService.reverseCommission(orderId);
     }
 
-    // If status is COMPLETED or DELIVERED, trigger commission calculation
-    if (status === 'COMPLETED' || status === 'DELIVERED') {
+    // Trigger Commission & Rewards on PAID or COMPLETED
+    // Assuming PAID triggers the sales record.
+    if ((status === 'PAID' || status === 'COMPLETED') && !order.commissionCalculated) {
         const commissionService = await import('./commission.service.js');
-        await commissionService.calculateCommission(order);
+        const rewardService = await import('./reward.service.js');
 
-        if (!order.commissionCalculated) {
-            order.commissionCalculated = true;
-        }
+        await commissionService.createPendingCommission(order);
+        await rewardService.processOrderRewards(order);
+
+        order.commissionCalculated = true;
     }
 
     await order.save();

@@ -145,7 +145,7 @@ Base URL: `http://localhost:5000/api/v1`
   }
 }
 ```
-*Note: `referralCode` is optional. If valid, commissions are tracked.*
+*Note: `referralCode` is optional. If valid, commissions are tracked. Commissions are calculated monthly.*
 
 ### 2. Get My Orders
 **Endpoint:** `GET /orders/me`
@@ -165,7 +165,7 @@ Base URL: `http://localhost:5000/api/v1`
   "status": "SHIPPED"
 }
 ```
-*Note: Setting status to `COMPLETED` or `DELIVERED` triggers commission calculation if an agent was involved.*
+*Note: Setting status to `COMPLETED` or `DELIVERED` triggers pending commission creation and loyalty point accumulation.*
 
 ### 5. Get Agent Orders (Agent Only)
 **Endpoint:** `GET /orders/agent`
@@ -173,15 +173,94 @@ Base URL: `http://localhost:5000/api/v1`
 
 ---
 
-## Commissions
+## Commissions & Slabs (Admin)
 
-### 1. Get My Commissions (Agent Only)
+### 1. Manage Commission Slabs
+**Endpoints:**
+- `GET /admin/commission-slabs` - List all slabs.
+- `POST /admin/commission-slabs` - Create slab.
+- `PATCH /admin/commission-slabs/:id` - Update slab.
+- `DELETE /admin/commission-slabs/:id` - Delete slab.
+
+**Body (Create/Update):**
+```json
+{
+  "minSales": 0,
+  "maxSales": 50000,
+  "percentage": 5
+}
+```
+
+### 2. Get All Agents (Admin)
+**Endpoint:** `GET /admin/agents`
+**Headers:** `Authorization: Bearer <admin_token>`
+
+### 3. Get All Commissions (Admin)
+**Endpoint:** `GET /admin/commissions`
+**Headers:** `Authorization: Bearer <admin_token>`
+**Query Params:** `status=PENDING`
+
+### 4. Approve Monthly Payouts
+**Endpoint:** `POST /admin/payouts/approve`
+**Headers:** `Authorization: Bearer <admin_token>`
+
+**Body:**
+```json
+{
+  "agentId": "65b...",
+  "month": 1,
+  "year": 2026
+}
+```
+*Calculates total sales for the month, determines slab, updates commissions to PAID, and credits agent wallet.*
+
+---
+
+## Agent Dashboard
+
+### 1. Get My Commissions
 **Endpoint:** `GET /commissions/me`
 **Headers:** `Authorization: Bearer <agent_token>`
 
-### 2. Get All Commissions (Admin Only)
-**Endpoint:** `GET /commissions`
-**Headers:** `Authorization: Bearer <admin_token>`
+### 2. Get My Wallet
+**Endpoint:** `GET /wallet/me`
+**Headers:** `Authorization: Bearer <agent_token>`
+
+**Response:**
+```json
+{
+  "balance": 1500.00,
+  "agentId": "..."
+}
+```
+
+---
+
+## Customer Rewards
+
+### 1. Get My Rewards
+**Endpoint:** `GET /rewards/me`
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "points": 150,
+  "isLocked": false,
+  "eligibleFrom": "2026-04-25T..."
+}
+```
+
+### 2. Redeem Rewards
+**Endpoint:** `POST /rewards/redeem`
+**Headers:** `Authorization: Bearer <token>`
+
+**Body:**
+```json
+{
+  "points": 50
+}
+```
 
 ---
 

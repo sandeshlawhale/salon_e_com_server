@@ -40,6 +40,9 @@ const userSchema = new mongoose.Schema({
     // Customer Specific Data
     customerProfile: {
         assignedAgentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        rewardPoints: { type: Number, default: 0 },
+        firstOrderDate: { type: Date, default: null },
+        rewardEligibleFromDate: { type: Date, default: null },
         shippingAddresses: [{
             street: String,
             city: String,

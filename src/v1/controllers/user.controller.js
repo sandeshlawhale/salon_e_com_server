@@ -17,3 +17,15 @@ export const updateProfile = async (req, res) => {
         res.status(400).json({ message: error.message });
     }
 };
+
+export const getAgents = async (req, res) => {
+    try {
+        const User = await import('../models/User.js').then(m => m.default);
+        const agents = await User.find({ role: 'AGENT' })
+            .select('-passwordHash')
+            .sort({ createdAt: -1 });
+        res.json(agents);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
