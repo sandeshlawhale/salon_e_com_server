@@ -8,7 +8,7 @@ const notificationSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['USER', 'AGENT', 'ADMIN'],
+        enum: ['CUSTOMER', 'AGENT', 'ADMIN'],
         required: true
     },
     title: {

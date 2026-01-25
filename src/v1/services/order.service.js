@@ -2,6 +2,7 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import * as notificationService from './notification.service.js';
 
 export const createOrder = async (userId, orderData) => {
     const { items, referralCode, shippingAddress } = orderData;
@@ -61,6 +62,26 @@ export const createOrder = async (userId, orderData) => {
         timeline: [{ status: 'PENDING', note: 'Order created' }]
     });
 
+    // Notify Customer
+    await notificationService.createNotification({
+        userId: userId,
+        role: 'CUSTOMER',
+        title: 'Order Created',
+        message: `Your order ${order.orderNumber} has been successfully placed.`,
+        type: 'ORDER'
+    });
+
+    // Notify Agent
+    if (agentId) {
+        await notificationService.createNotification({
+            userId: agentId,
+            role: 'AGENT',
+            title: 'New Order Assigned',
+            message: `New order ${order.orderNumber} has been placed with your referral code.`,
+            type: 'ORDER'
+        });
+    }
+
     return order;
 };
 
@@ -84,6 +105,26 @@ export const updateOrderStatus = async (orderId, status) => {
 
     order.status = status;
     order.timeline.push({ status, note: `Status updated to ${status}` });
+
+    // Notify Customer
+    await notificationService.createNotification({
+        userId: order.customerId,
+        role: 'CUSTOMER',
+        title: `Order ${status}`,
+        message: `Your order ${order.orderNumber} status has been updated to ${status}.`,
+        type: 'ORDER'
+    });
+
+    // Notify Agent if Cancelled
+    if (status === 'CANCELLED' && order.agentId) {
+        await notificationService.createNotification({
+            userId: order.agentId,
+            role: 'AGENT',
+            title: 'Order Cancelled',
+            message: `Order ${order.orderNumber} assigned to you has been cancelled.`,
+            type: 'ORDER'
+        });
+    }
 
     // If status is COMPLETED or DELIVERED, trigger commission calculation
     if (status === 'COMPLETED' || status === 'DELIVERED') {
