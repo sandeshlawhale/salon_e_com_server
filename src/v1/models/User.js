@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema({
         commissionRate: { type: Number, default: 0.10 }, // 10% default
         referralCode: { type: String, unique: true, sparse: true },
         totalEarnings: { type: Number, default: 0 },
+        points: { type: Number, default: 0 },
         bankDetails: {
             bankName: String,
             accountNumber: String

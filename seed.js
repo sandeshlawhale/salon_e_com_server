@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Product from './src/v1/models/Product.js';
+import User from './src/v1/models/User.js';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -170,6 +172,44 @@ const seedDatabase = async () => {
         insertedProducts.forEach((product, index) => {
             console.log(`${index + 1}. ${product.name} (ID: ${product._id})`);
         });
+
+        // Create admin user if not exists
+        const adminEmail = 'bharbatdivyansh1@gmail.com';
+        const adminPassword = '9850364491';
+        const adminExists = await User.findOne({ email: adminEmail });
+        if (!adminExists) {
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash(adminPassword, salt);
+            const admin = await User.create({
+                email: adminEmail,
+                passwordHash,
+                firstName: 'Divyansh',
+                lastName: 'Bharbat',
+                role: 'ADMIN'
+            });
+            console.log(`✅ Admin user created: ${adminEmail}`);
+        } else {
+            console.log('Admin user already exists');
+        }
+
+        // Create sample agent for testing if not exists
+        const agentEmail = 'agent1@salon.dev';
+        const agentExists = await User.findOne({ email: agentEmail });
+        if (!agentExists) {
+            const salt = await bcrypt.genSalt(10);
+            const passwordHash = await bcrypt.hash('agentpassword', salt);
+            const agent = await User.create({
+                email: agentEmail,
+                passwordHash,
+                firstName: 'Rajesh',
+                lastName: 'Kumar',
+                role: 'AGENT',
+                agentProfile: { commissionRate: 0.015, referralCode: 'AGT-1001', totalEarnings: 0 }
+            });
+            console.log(`✅ Sample agent created: ${agentEmail} (referral: AGT-1001)`);
+        } else {
+            console.log('Sample agent already exists');
+        }
 
         await mongoose.disconnect();
         console.log('Database seeding completed!');

@@ -9,9 +9,13 @@ const router = express.Router();
 // Public/User routes
 router.post('/', protect, orderController.createOrder); // Customer or Agent can buy
 router.get('/me', protect, orderController.getMyOrders);
+// Agent assigned orders
+router.get('/assigned', protect, authorize('AGENT'), orderController.getAssignedOrders);
 
 // Admin routes
 router.get('/', protect, authorize('ADMIN'), orderController.getAllOrders);
 router.patch('/:id/status', protect, authorize('ADMIN'), orderController.updateStatus);
+// Admin assign agent to order
+router.patch('/:id/assign-agent', protect, authorize('ADMIN'), orderController.assignAgent);
 
 export default router;

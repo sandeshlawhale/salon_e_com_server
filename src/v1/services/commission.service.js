@@ -27,7 +27,13 @@ export const calculateCommission = async (order) => {
 
     // Update agent's total earnings
     agent.agentProfile.totalEarnings += amountEarned;
+
+    // Award points to agent (1 point per ₹1 of commission rounded)
+    agent.agentProfile.points = (agent.agentProfile.points || 0) + Math.round(amountEarned);
+
     await agent.save();
+
+    console.log(`[commission] Created commission ${commission._id} for agent ${agent.email}: ₹${amountEarned}`);
 
     return commission;
 };
