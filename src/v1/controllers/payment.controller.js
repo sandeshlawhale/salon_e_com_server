@@ -11,25 +11,39 @@ export const createRazorpayOrder = async (req, res) => {
     try {
         const { amount, currency = 'INR', receipt } = req.body;
 
+        console.log('[payment] Creating Razorpay order:', { amount, currency, receipt });
+
         if (!amount) {
+            console.error('[payment] Error: Amount is required');
             return res.status(400).json({ message: 'Amount is required' });
         }
 
         const options = {
             amount: Math.round(amount * 100), // Razorpay expects amount in paise
             currency,
-            receipt,
+            receipt: receipt || `receipt_${Date.now()}`,
         };
 
+        console.log('[payment] Razorpay options:', options);
+
         const response = await razorpay.orders.create(options);
+        console.log('[payment] Razorpay order created:', response.id);
+
         res.status(200).json({
             id: response.id,
             currency: response.currency,
             amount: response.amount,
         });
     } catch (error) {
-        console.error('Razorpay Error:', error);
-        res.status(500).json({ message: error.message });
+        console.error('[payment] Razorpay SDK Error:', error);
+        // Log more details if available (some SDK errors have a 'description' or 'error' object)
+        if (error.error) console.error('[payment] Error Detail:', error.error);
+
+        res.status(500).json({
+            message: 'Razorpay order creation failed',
+            error: error.message,
+            detail: error.error ? error.error.description : null
+        });
     }
 };
 

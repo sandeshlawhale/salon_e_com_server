@@ -47,7 +47,8 @@ const orderSchema = new mongoose.Schema({
         note: String
     }],
 
-    commissionCalculated: { type: Boolean, default: false }
+    commissionCalculated: { type: Boolean, default: false },
+    inventoryTracked: { type: Boolean, default: false }
 
 }, { timestamps: true });
 

@@ -13,22 +13,22 @@ export const createOrder = async (userId, orderData) => {
 
     for (const item of items) {
         let product;
-        
+
         // Try by ObjectId only if it's a valid MongoDB ObjectId format
         if (ObjectId.isValid(item.productId) && typeof item.productId === 'string' && item.productId.length === 24) {
             product = await Product.findById(item.productId);
         }
-        
+
         // If not found by ObjectId, try to find by slug
         if (!product) {
             product = await Product.findOne({ slug: item.productId });
         }
-        
+
         // If still not found, try numeric ID matching slug pattern
         if (!product && !isNaN(item.productId)) {
             product = await Product.findOne({ slug: `product-${item.productId}` });
         }
-        
+
         if (!product) {
             throw new Error(`Product ${item.productId} not found`);
         }
@@ -48,18 +48,6 @@ export const createOrder = async (userId, orderData) => {
             priceAtPurchase: price,
             image: product.images?.[0]
         });
-
-        // Decrement inventory and update status
-        if (typeof product.inventoryCount === 'number') {
-            const before = product.inventoryCount;
-            product.inventoryCount = product.inventoryCount - item.quantity;
-            if (product.inventoryCount <= 0) {
-                product.inventoryCount = 0;
-                product.status = 'OUT_OF_STOCK';
-            }
-            await product.save();
-            console.log(`Inventory updated for ${product.name}: ${before} -> ${product.inventoryCount}`);
-        }
     }
 
     // 2. Calculate Totals
@@ -192,5 +180,43 @@ export const updateOrderStatus = async (orderId, status) => {
 
     await order.save();
     console.log(`[order] Order ${order.orderNumber} saved with status ${order.status}`);
+
+    // Inventory Management
+    const confirmedStatuses = ['PAID', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'];
+    const refundStatuses = ['CANCELLED', 'REFUNDED'];
+
+    if (confirmedStatuses.includes(status) && !order.inventoryTracked) {
+        console.log(`[inventory] Decrementing inventory for order ${order.orderNumber}`);
+        for (const item of order.items) {
+            const product = await Product.findById(item.productId);
+            if (product && typeof product.inventoryCount === 'number') {
+                const before = product.inventoryCount;
+                product.inventoryCount = Math.max(0, product.inventoryCount - item.quantity);
+                if (product.inventoryCount === 0) {
+                    product.status = 'OUT_OF_STOCK';
+                }
+                await product.save();
+                console.log(`[inventory] Updated ${product.name}: ${before} -> ${product.inventoryCount}`);
+            }
+        }
+        order.inventoryTracked = true;
+        await order.save();
+    } else if (refundStatuses.includes(status) && order.inventoryTracked) {
+        console.log(`[inventory] Refunding inventory for order ${order.orderNumber}`);
+        for (const item of order.items) {
+            const product = await Product.findById(item.productId);
+            if (product && typeof product.inventoryCount === 'number') {
+                const before = product.inventoryCount;
+                product.inventoryCount = product.inventoryCount + item.quantity;
+                // If it was out of stock, might need to reset status if there's a more complex state machine
+                // but for now just incrementing is enough.
+                await product.save();
+                console.log(`[inventory] Refunded ${product.name}: ${before} -> ${product.inventoryCount}`);
+            }
+        }
+        order.inventoryTracked = false;
+        await order.save();
+    }
+
     return order;
 };
